@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Daily Mastery | Win The Day</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Inter:wght@400;600;800;900&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="bg-black text-zinc-100 min-h-screen flex flex-col items-center p-4">
+
+  <main class="w-full max-w-md my-4 space-y-5">
+    
+    <!-- Top Bar -->
+    <header class="border-b border-zinc-900 pb-3 flex justify-between items-baseline">
+      <div>
+        <h1 class="text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500 mono">MINDSET PROTOCOL</h1>
+        <div class="text-xl font-black tracking-tight text-white uppercase">WIN THE DAY</div>
+      </div>
+      <div id="todayDate" class="mono text-xs text-zinc-500">2026-09-29</div>
+    </header>
+
+    <!-- Mental Ownership Quote Header -->
+    <div class="p-3.5 bg-zinc-950 border border-zinc-900 rounded-2xl text-xs text-zinc-400 italic">
+      "Kemenangan besar dibina daripada kepatuhan harian terhadap perkara kecil. Kuasai hari ini, kau kuasai masa depan."
+    </div>
+
+    <!-- Core Scoreboard: Momentum Kemenangan -->
+    <div class="grid grid-cols-2 gap-3">
+      <div class="bg-zinc-950 border border-zinc-900 rounded-2xl p-4">
+        <span class="text-[10px] mono uppercase tracking-wider text-zinc-500 block">Current Streak</span>
+        <div class="flex items-baseline gap-1 mt-1">
+          <span id="streakCount" class="text-4xl font-extrabold tracking-tight text-emerald-400 mono">0</span>
+          <span class="text-xs text-zinc-500">HARI</span>
+        </div>
+      </div>
+      <div class="bg-zinc-950 border border-zinc-900 rounded-2xl p-4">
+        <span class="text-[10px] mono uppercase tracking-wider text-zinc-500 block">Total Days Won</span>
+        <div class="flex items-baseline gap-1 mt-1">
+          <span id="totalWon" class="text-4xl font-extrabold tracking-tight text-zinc-100 mono">0</span>
+          <span class="text-xs text-zinc-500">HARI</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Tracker (Target Fasa 30 Hari Kemenangan) -->
+    <div class="bg-zinc-950 border border-zinc-900 rounded-2xl p-4 space-y-2">
+      <div class="flex justify-between text-xs mono">
+        <span class="text-zinc-500 uppercase tracking-wider">Momentum Fasa (30 Hari)</span>
+        <span id="phasePercent" class="text-emerald-400 font-bold">0%</span>
+      </div>
+      <div class="w-full h-2 bg-zinc-900 rounded-full overflow-hidden">
+        <div id="progressBar" class="h-full bg-emerald-500 transition-all duration-700" style="width: 0%;"></div>
+      </div>
+    </div>
+
+    <!-- Execution Panel -->
+    <section class="bg-zinc-950 border border-zinc-900 rounded-2xl p-5 space-y-4">
+      <div class="flex justify-between items-center">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-300 mono">Pengesahan Kemenangan</h2>
+        <span id="statusBadge" class="text-[10px] mono font-bold px-2 py-0.5 rounded bg-zinc-900 text-zinc-500 border border-zinc-800">
+          BELUM SAH
+        </span>
+      </div>
+
+      <!-- Kotak 1: Apa kemajuan hari ini? -->
+      <div class="space-y-1">
+        <label class="text-[11px] mono uppercase text-zinc-500">Kemenangan / Kemajuan Hari Ini:</label>
+        <textarea id="winInput" rows="2" 
+          placeholder="Cth: Selesai 2 bab Linear Algebra, konsisten solat tepat waktu, pacing larian maintain..."
+          class="w-full bg-black border border-zinc-800 rounded-xl p-3 text-xs mono text-zinc-200 placeholder:text-zinc-700 focus:outline-none focus:border-zinc-500 resize-none"></textarea>
+      </div>
+
+      <!-- Kotak 2: Pengesahan Minda / Ikrar Kendiri -->
+      <div class="space-y-1">
+        <label class="text-[11px] mono uppercase text-zinc-500">Mesej Kepada Diri Sendiri (Self-Talk):</label>
+        <input type="text" id="mentalInput" 
+          placeholder="Cth: Aku pegang kawalan ke atas fikiran aku hari ini. Tiada alasan."
+          class="w-full bg-black border border-zinc-800 rounded-xl p-3 text-xs text-zinc-200 placeholder:text-zinc-700 focus:outline-none focus:border-zinc-500">
+      </div>
+
+      <button id="lockWinBtn" onclick="claimDailyWin()"
+        class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] transition font-extrabold text-black rounded-xl text-xs uppercase tracking-widest mono shadow-lg shadow-emerald-950/40">
+        ✓ Sahkan: Hari Ini Aku Menang
+      </button>
+    </section>
+
+    <!-- Sejarah Log Kemenangan -->
+    <section class="space-y-2">
+      <div class="flex justify-between items-center text-xs uppercase tracking-wider mono text-zinc-500">
+        <span>Log Rekod Kemenangan</span>
+        <button onclick="loadMasteryData()" class="hover:text-zinc-300">Sync 🔄</button>
+      </div>
+      <div id="masteryList" class="space-y-2 max-h-72 overflow-y-auto pr-1 text-xs mono">
+        <p class="text-zinc-700 text-center py-4">Memuat rekod kejayaan...</p>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // --- 1. KONFIGURASI SUPABASE ---
+    const SUPABASE_URL = "https://jrbbiqchqahyjhkxqmgr.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_5NR1DcL0YZ1Z5416-kX_2w_f8la6ycO";
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Dapatkan tarikh kalendar tempatan YYYY-MM-DD
+    function getTodayString() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    const todayStr = getTodayString();
+    document.getElementById('todayDate').innerText = todayStr;
+
+    // --- 2. MUAT DATA REKOD ---
+    async function loadMasteryData() {
+      const { data, error } = await db
+        .from('daily_mastery')
+        .select('*')
+        .order('mastery_date', { ascending: false });
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      const logs = data || [];
+      const totalWins = logs.filter(l => l.win_status).length;
+      document.getElementById('totalWon').innerText = totalWins;
+
+      // Semak status hari ini
+      const todayRecord = logs.find(l => l.mastery_date === todayStr);
+      const statusBadge = document.getElementById('statusBadge');
+      const winBtn = document.getElementById('lockWinBtn');
+
+      if (todayRecord && todayRecord.win_status) {
+        statusBadge.innerText = "HARI INI DITAKLUKI ✓";
+        statusBadge.className = "text-[10px] mono font-bold px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800";
+        winBtn.disabled = true;
+        winBtn.innerText = "Hari Ini Berjaya Ditutup";
+        winBtn.className = "w-full py-4 bg-zinc-900 text-zinc-600 rounded-xl text-xs uppercase tracking-widest mono cursor-not-allowed";
+      } else {
+        statusBadge.innerText = "BELUM SAH";
+        statusBadge.className = "text-[10px] mono font-bold px-2 py-0.5 rounded bg-amber-950/60 text-amber-400 border border-amber-800";
+        winBtn.disabled = false;
+        winBtn.innerText = "✓ Sahkan: Hari Ini Aku Menang";
+        winBtn.className = "w-full py-4 bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] transition font-extrabold text-black rounded-xl text-xs uppercase tracking-widest mono shadow-lg shadow-emerald-950/40";
+      }
+
+      // Hitung Consecutive Streak
+      let streak = 0;
+      let checkDate = new Date();
+      checkDate.setHours(0, 0, 0, 0);
+
+      // Jika belum tanda hari ini, mulakan semakan streak dari semalam
+      if (!todayRecord) {
+        checkDate.setDate(checkDate.getDate() - 1);
+      }
+
+      while (true) {
+        const yyyy = checkDate.getFullYear();
+        const mm = String(checkDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(checkDate.getDate()).padStart(2, '0');
+        const dStr = `${yyyy}-${mm}-${dd}`;
+
+        const found = logs.find(l => l.mastery_date === dStr && l.win_status);
+        if (found) {
+          streak++;
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+
+      document.getElementById('streakCount').innerText = streak;
+
+      // Phase Progress Bar (Sasaran Fasa 30 Hari Berturut-turut)
+      const targetDays = 30;
+      const pct = Math.min(Math.round((streak / targetDays) * 100), 100);
+      document.getElementById('phasePercent').innerText = `${pct}% (${streak}/${targetDays} HARI)`;
+      document.getElementById('progressBar').style.width = `${pct}%`;
+
+      // Papar Senarai Sejarah
+      const listContainer = document.getElementById('masteryList');
+      if (logs.length === 0) {
+        listContainer.innerHTML = `<p class="text-zinc-700 text-center py-4">Belum ada hari yang direkodkan. Mulakan hari pertama.</p>`;
+        return;
+      }
+
+      listContainer.innerHTML = logs.map(item => `
+        <div class="p-3 bg-zinc-950 border border-zinc-900 rounded-xl space-y-1.5">
+          <div class="flex justify-between items-baseline border-b border-zinc-900/60 pb-1.5">
+            <span class="text-zinc-300 font-bold">${item.mastery_date}</span>
+            <span class="text-emerald-400 font-extrabold text-[10px]">DAY WON ✓</span>
+          </div>
+          <p class="text-zinc-200 text-xs">${item.daily_win}</p>
+          ${item.mental_statement ? `<p class="text-zinc-500 text-[11px] italic">"${item.mental_statement}"</p>` : ''}
+        </div>
+      `).join('');
+    }
+
+    // --- 3. SAHKAN HARI INI ---
+    async function claimDailyWin() {
+      const winText = document.getElementById('winInput').value.trim();
+      const mentalText = document.getElementById('mentalInput').value.trim();
+      const btn = document.getElementById('lockWinBtn');
+
+      if (!winText) {
+        alert("Tulis sekurang-kurangnya satu kemajuan atau kemenangan hari ini sebelum mengunci.");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = "Claiming Victory...";
+
+      const { error } = await db
+        .from('daily_mastery')
+        .upsert({
+          mastery_date: todayStr,
+          win_status: true,
+          daily_win: winText,
+          mental_statement: mentalText || 'Aku berdisiplin dan fokus pada proses.'
+        }, { onConflict: 'mastery_date' });
+
+      if (error) {
+        alert("Ralat simpan: " + error.message);
+        btn.disabled = false;
+        btn.innerText = "✓ Sahkan: Hari Ini Aku Menang";
+      } else {
+        document.getElementById('winInput').value = "";
+        document.getElementById('mentalInput').value = "";
+        await loadMasteryData();
+      }
+    }
+
+    loadMasteryData();
+  </script>
+</body>
+</html>
