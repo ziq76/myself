@@ -23,7 +23,7 @@
         <h1 class="text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500 mono">MINDSET PROTOCOL</h1>
         <div class="text-xl font-black tracking-tight text-white uppercase">WIN THE DAY</div>
       </div>
-      <div id="todayDate" class="mono text-xs text-zinc-500">2026-09-29</div>
+      <div id="todayDate" class="mono text-xs text-zinc-500">Memuatkan...</div>
     </header>
 
     <!-- Mental Ownership Quote Header -->
@@ -31,13 +31,26 @@
       "Kemenangan besar dibina daripada kepatuhan harian terhadap perkara kecil. Kuasai hari ini, kau kuasai masa depan."
     </div>
 
+    <!-- Tanda Kejayaan: 30-Day Completed Badges -->
+    <section id="badgesSection" class="hidden bg-zinc-950 border border-amber-500/30 rounded-2xl p-4 space-y-2">
+      <div class="flex justify-between items-center text-xs mono">
+        <span class="text-amber-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+          <span>🏆</span> FASA 30-HARI DITAKLUK
+        </span>
+        <span id="badgesTotalCount" class="text-zinc-400 font-bold">0 Selesai</span>
+      </div>
+      <div id="badgesContainer" class="flex flex-wrap gap-2 pt-1">
+        <!-- Lencana 30-hari akan dipaparkan di sini -->
+      </div>
+    </section>
+
     <!-- Core Scoreboard: Momentum Kemenangan -->
     <div class="grid grid-cols-2 gap-3">
       <div class="bg-zinc-950 border border-zinc-900 rounded-2xl p-4">
-        <span class="text-[10px] mono uppercase tracking-wider text-zinc-500 block">Current Streak</span>
+        <span class="text-[10px] mono uppercase tracking-wider text-zinc-500 block">Kitaran Fasa Semasa</span>
         <div class="flex items-baseline gap-1 mt-1">
-          <span id="streakCount" class="text-4xl font-extrabold tracking-tight text-emerald-400 mono">0</span>
-          <span class="text-xs text-zinc-500">HARI</span>
+          <span id="currentCycleDay" class="text-4xl font-extrabold tracking-tight text-emerald-400 mono">0</span>
+          <span class="text-xs text-zinc-500">/ 30 HARI</span>
         </div>
       </div>
       <div class="bg-zinc-950 border border-zinc-900 rounded-2xl p-4">
@@ -52,7 +65,7 @@
     <!-- Progress Tracker (Target Fasa 30 Hari Kemenangan) -->
     <div class="bg-zinc-950 border border-zinc-900 rounded-2xl p-4 space-y-2">
       <div class="flex justify-between text-xs mono">
-        <span class="text-zinc-500 uppercase tracking-wider">Momentum Fasa (30 Hari)</span>
+        <span class="text-zinc-500 uppercase tracking-wider" id="phaseLabel">Fasa 1: Menuju 30 Hari</span>
         <span id="phasePercent" class="text-emerald-400 font-bold">0%</span>
       </div>
       <div class="w-full h-2 bg-zinc-900 rounded-full overflow-hidden">
@@ -110,7 +123,7 @@
     const SUPABASE_KEY = "sb_publishable_5NR1DcL0YZ1Z5416-kX_2w_f8la6ycO";
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Dapatkan tarikh kalendar tempatan YYYY-MM-DD
+    // Format tarikh kalendar tempatan YYYY-MM-DD
     function getTodayString() {
       const now = new Date();
       const yyyy = now.getFullYear();
@@ -157,12 +170,11 @@
         winBtn.className = "w-full py-4 bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] transition font-extrabold text-black rounded-xl text-xs uppercase tracking-widest mono shadow-lg shadow-emerald-950/40";
       }
 
-      // Hitung Consecutive Streak
+      // Kira Consecutive Streak tanpa putus
       let streak = 0;
       let checkDate = new Date();
       checkDate.setHours(0, 0, 0, 0);
 
-      // Jika belum tanda hari ini, mulakan semakan streak dari semalam
       if (!todayRecord) {
         checkDate.setDate(checkDate.getDate() - 1);
       }
@@ -182,13 +194,40 @@
         }
       }
 
-      document.getElementById('streakCount').innerText = streak;
+      // --- LOGIK KITARAN 30-HARI & SIMPANAN LENCANA KEJAYAAN ---
+      const completedPhases = Math.floor(streak / 30);
+      const cycleDay = (streak % 30 === 0 && streak > 0) ? 30 : (streak % 30);
+      const currentPhaseNumber = completedPhases + 1;
 
-      // Phase Progress Bar (Sasaran Fasa 30 Hari Berturut-turut)
-      const targetDays = 30;
-      const pct = Math.min(Math.round((streak / targetDays) * 100), 100);
-      document.getElementById('phasePercent').innerText = `${pct}% (${streak}/${targetDays} HARI)`;
+      document.getElementById('currentCycleDay').innerText = cycleDay;
+      document.getElementById('phaseLabel').innerText = `Fasa ${currentPhaseNumber}: Hari ${cycleDay}/30`;
+
+      // Progress bar berasaskan kitaran 30 hari semasa
+      const pct = Math.round((cycleDay / 30) * 100);
+      document.getElementById('phasePercent').innerText = `${pct}%`;
       document.getElementById('progressBar').style.width = `${pct}%`;
+
+      // Papar Badges / Trofi 30-Hari yang berjaya dikumpul
+      const badgesSection = document.getElementById('badgesSection');
+      const badgesContainer = document.getElementById('badgesContainer');
+      const badgesCountText = document.getElementById('badgesTotalCount');
+
+      if (completedPhases > 0) {
+        badgesSection.classList.remove('hidden');
+        badgesCountText.innerText = `${completedPhases} Fasa (${completedPhases * 30} Hari)`;
+        
+        let badgesHtml = '';
+        for (let i = 1; i <= completedPhases; i++) {
+          badgesHtml += `
+            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 border border-amber-500/40 text-amber-300 font-bold text-xs mono">
+              <span>★</span> Fasa ${i} (30 Hari) Ditakluk
+            </div>
+          `;
+        }
+        badgesContainer.innerHTML = badgesHtml;
+      } else {
+        badgesSection.classList.add('hidden');
+      }
 
       // Papar Senarai Sejarah
       const listContainer = document.getElementById('masteryList');
